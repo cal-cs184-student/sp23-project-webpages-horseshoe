@@ -1,7 +1,298 @@
-<html>
-	<head>
-	</head>
-	<body>
-		Project 4 here
-	</body>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<style>
+  body {
+    padding: 100px;
+    width: 1000px;
+    margin: auto;
+    text-align: left;
+    font-weight: 300;
+    font-family: 'Open Sans', sans-serif;
+    color: #121212;
+  }
+  h1, h2, h3, h4 {
+    font-family: 'Source Sans Pro', sans-serif;
+  }
+</style>
+<title>CS 184 Mesh Editor</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link href="https://fonts.googleapis.com/css?family=Open+Sans|Source+Sans+Pro" rel="stylesheet">
+</head>
+
+
+<body>
+
+<h1 align="middle">CS 184: Computer Graphics and Imaging, Spring 2023</h1>
+<h1 align="middle">Project 4: Cloth Simulator</h1>
+<h2 align="middle">Austin Patel, Jennessa Ma, CS184</h2>
+
+<a href="https://cal-cs184-student.github.io/sp23-project-webpages-horseshoe/proj4/index.html" align="middle">https://cal-cs184-student.github.io/sp23-project-webpages-horseshoe/proj4/index.html</a>
+
+<br><br>
+
+<div>
+
+<h2 align="middle">Overview</h2>
+<p>We simulate a cloth by modeling it as a grid of masses and springs connected by different spring constraints. We do the physical modeling of the spring forces and gravity on the point masses. We extend this for self-collisions within the cloth and for collisions with spheres and planes. We use numerical integration to determine the movement of the cloth points. Finally, we experimented wit a series of shaders to see different visual appearances such as environment maps and blinn-phong shading.</p>
+
+<h2 align="middle">Part I: Masses and springs</h2>
+    <div align="middle">
+        <table style="width:100%">
+            <tr align="center">
+                <td>
+                    <img src="images/all_constraints.png" align="middle" width="400px"/>
+                    <figcaption>All constraints</figcaption>
+                </td>
+                <td>
+                    <img src="images/no_shearing.png" align="middle" width="400px"/>
+                    <figcaption>No shearing</figcaption>
+                </td>
+            </tr>
+            <tr align="center">
+                <td>
+                    <img src="images/only_shearing.png" align="middle" width="400px"/>
+                    <figcaption>Only shearing</figcaption>
+                </td>
+            </tr>
+        </table>
+    </div>
+<h2 align="middle">Part II: Simulation via numerical integration</h2>
+    <div align="middle">
+        <table style="width:100%">
+            <tr align="center">
+                <td>
+                    <img src="images/part2_pinned2.png" align="middle" width="400px"/>
+                    <figcaption>Default settings: pinned2</figcaption>
+                </td>
+            </tr>
+        </table>
+
+        <table style="width:100%">
+            <tr align="center">
+                <td>
+                    <img src="images/part2_ks100.png" align="middle" width="400px"/>
+                    <figcaption>Small Ks (100 N/m)</figcaption>
+                </td>
+                <td>
+                    <img src="images/part2_ks10000.png" align="middle" width="400px"/>
+                    <figcaption>Large Ks (10000 N/m)</figcaption>
+                </td>
+            </tr>
+        </table>
+        <p>Modifying the spring constant affects how strong the springs are. For example, a very small spring constant creates many valleys/ripples across the 2 pinned corners, whereas a really high spring constant (strong springs) only creates 1 shallow valley.</p>
+
+        <table style="width:100%">
+            <tr align="center">
+                <td>
+                    <img src="images/part2_density2.png" align="middle" width="400px"/>
+                    <figcaption>Small density (2g/cm^2)</figcaption>
+                </td>
+                <td>
+                    <img src="images/part2_density100.png" align="middle" width="400px"/>
+                    <figcaption>Large density (100g/cm^2)</figcaption>
+                </td>
+            </tr>
+        </table>
+        <p>Changing the density of the cloth impacts the mass of each of the point masses in the cloth. If there is a small density, then each point will have a small mass meaning that the points will have a larger acceleration due to the spring force (F=ma). If the density is high, then the points will have higher mass and will move more slowly. With heavier points the cloth sags downward more and with smaller mass there is less sag in the cloth.</p>
+
+        <table style="width:100%">
+            <tr align="center">
+                <td>
+                    <img src="images/part2_damping2.png" align="middle" width="400px"/>
+                    <figcaption>Small damping (2%)</figcaption>
+                </td>
+                <td>
+                    <img src="images/part2_damping95.png" align="middle" width="400px"/>
+                    <figcaption>Large damping (95%)</figcaption>
+                </td>
+            </tr>
+        </table>
+        <p>Modifying the damping term affects the stability of the cloth while it simulates. With a very small damping term, the cloth was constantly wavering and unstable, while a large damping term caused the cloth to be very stagnant and stabilized once it fell.</p>
+
+        <table style="width:100%">
+            <tr align="center">
+                <td>
+                    <img src="images/part2_pinned4.png" align="middle" width="400px"/>
+                    <figcaption>Default settings: pinned4</figcaption>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+<h2 align="middle">Part III: Handling collisions with other objects</h2>
+    <table style="width:100%">
+        <tr align="center">
+            <td>
+                <img src="images/part3_sphere5000.png" align="middle" width="400px"/>
+                <figcaption>Default ks=5000 sphere</figcaption>
+            </td>
+            <td>
+                <img src="images/part3_sphere500.png" align="middle" width="400px"/>
+                <figcaption>Small ks=500</figcaption>
+            </td>
+        </tr>
+        <tr align="center">
+            <td>
+                <img src="images/part3_sphere50000.png" align="middle" width="400px"/>
+                <figcaption>Large ks=50000</figcaption>
+            </td>
+            <td>
+                <img src="images/part3_plane.png" align="middle" width="400px"/>
+                <figcaption>Cloth lying peacefully on the plane</figcaption>
+            </td>
+        </tr>
+    </table>
+    <p>With a weaker spring constant (500), the springs in the cloth are overall weaker, so it easily folds over itself more as it drapes over the sphere.
+        On the other hand, a very high spring constant (50000) means the springs are very strong so the cloth is expected to be quite stiff. This can be seen by the very few folds on the cloth and the edges sticking outwards more as it physically has a harder time bending.</p>
+
+<h2 align="middle">Part IV: Handling self-collisions</h2>
+    <p>Default parameters:</p>
+    <table style="width:100%">
+        <tr align="center">
+            <td>
+                <img src="images/p4_normal1.png" align="middle" width="400px"/>
+                <figcaption>Time 1</figcaption>
+            </td>
+            <td>
+                <img src="images/p4_normal2.png" align="middle" width="400px"/>
+                <figcaption>Time 2</figcaption>
+            </td>
+        </tr>
+        <tr align="center">
+
+            <td>
+                <img src="images/p4_normal3.png" align="middle" width="400px"/>
+                <figcaption>Time 3</figcaption>
+            </td>
+            <td>
+                <img src="images/p4_normal4.png" align="middle" width="400px"/>
+                <figcaption>Time 4</figcaption>
+            </td>
+        </tr>
+    </table>
+
+    <p>Varying the density of the cloth impacts how smooth the folds are in the cloth. For the very low density experiment, the cloth folded very flatly across the surface, while the high density cloth had had a lot of smaller wrinkles and didn't fold flat as nicely.</p>
+    <table style="width:100%">
+        <tr align="center">
+            <td>
+                <img src="images/p4_density_1.png" align="middle" width="400px"/>
+                <figcaption>Density 1 g/cm^2</figcaption>
+            </td>
+            <td>
+                <img src="images/p4_density_100.png" align="middle" width="400px"/>
+                <figcaption>Density 100 g/cm^2</figcaption>
+            </td>
+        </tr>
+    </table>
+
+    <p>Varying the spring constant changes how stiff the cloth is and how resistant it is to folds. For the low Ks experiment the cloth had less rigid structure and didn't lay as flat. For the high Ks experiment, the cloth had a more rigid structure and had a smaller number of folds.</p>
+    <table style="width:100%">
+        <tr align="center">
+            <td>
+                <img src="images/p4_ks_100.png" align="middle" width="400px"/>
+                <figcaption>Ks 100 N/m</figcaption>
+            </td>
+            <td>
+                <img src="images/p4_ks_50000.png" align="middle" width="400px"/>
+                <figcaption>Ks 50000 N/m</figcaption>
+            </td>
+        </tr>
+    </table>
+
+<h2 align="middle">Part V: Shaders</h2>
+    <p>A shader program is composed of a vertex shader and a fragment shader that works together to create light, texture, color, material, etc. outputs.
+        A vertex shader works on individual vertices by applying transformations such as converting it to the model space, sampling texture maps, and scaling it to determine the final position on the screen.
+        This creates the input to the fragment shaders, which expects varyings such as the normals, transformed positions, tangents, uvs, etc. With these varyings, the fragment shader can use them to compute the final color and appearance of a pixel. This could mean sampling another texture map, using the normals to calculate new rays, calculating diffuse/specular/ambient shading, etc.
+        Together, the final output could be very complex materials such as blinn-phong shadings, mirrored images, and bumpy/displaced surfaces. </p>
+
+    <p> Blinn-Phong Shading: This shading involves combining ambient, diffuse, and specular light to create a final surface.
+        In our implementation, the ambient component consists of constants ka and Ia multiplied together, resulting in a simple color that affects all surfaces equally.
+        The diffuse component consists of using the constant kd, light intensity I, distance from the camera to the position, the normal, and direction to the light to simulate diffuse objects under light.
+        The specular component focuses on light reflecting off a specific direction, creating the shiny parts of the cloth.</p>
+    <table style="width:100%">
+        <tr align="center">
+            <td>
+                <img src="images/p5_phong_ambient.png" align="middle" width="400px"/>
+                <figcaption>Ambient component</figcaption>
+            </td>
+            <td>
+                <img src="images/p5_phong_diffuse.png" align="middle" width="400px"/>
+                <figcaption>Diffuse component</figcaption>
+            </td>
+        </tr>
+        <tr align="center">
+
+            <td>
+                <img src="images/p5_phong_specular.png" align="middle" width="400px"/>
+                <figcaption>Specular component</figcaption>
+            </td>
+            <td>
+                <img src="images/p5_phong_all.png" align="middle" width="400px"/>
+                <figcaption>Entire Blinn-Phong model</figcaption>
+            </td>
+        </tr>
+    </table>
+
+    <p>Texture mapping shader with our own custom texture (kresge library): </p>
+    <table style="width:100%">
+        <tr align="center">
+            <td>
+                <img src="images/p5_texture_custom.png" align="middle" width="400px"/>
+                <figcaption>Custom texture</figcaption>
+            </td>
+        </tr>
+    </table>
+
+    <p>Bump mapping and displacement mapping: Bump mapping involves modifying the surface normals according to a bump map which is a texture. For the desired u,v coordinates, we compute a discrete derivative of the texture at u,v and use that derivative to compute a modified surface normal. This lets us generate the appearance of bumps by modifying surface normals. Displacement mapping takes this one step further by actually modifying the locations of the vertices by the height in the texture map (moved in direction of the surface normal).</p>
+    <table style="width:100%">
+        <tr align="center">
+            <td>
+                <img src="images/p5_bump.png" align="middle" width="400px"/>
+                <figcaption>Bump mapping on the cloth and on the sphere</figcaption>
+            </td>
+            <td>
+                <img src="images/p5_displacement.png" align="middle" width="400px"/>
+                <figcaption>Displacement mapping on the sphere</figcaption>
+            </td>
+        </tr>
+        <tr align="center">
+            <td>
+                <img src="images/p5_bump_16.png" align="middle" width="400px"/>
+                <figcaption>Bump: Modified sphere's coarseness: -o 16 -a 16</figcaption>
+            </td>
+            <td>
+                <img src="images/p5_bump_128.png" align="middle" width="400px"/>
+                <figcaption>Bump: Modified sphere's coarseness: -o 128 -a 128</figcaption>
+            </td>
+        </tr>
+        <tr align="center">
+            <td>
+                <img src="images/p5_displacement_16.png" align="middle" width="400px"/>
+                <figcaption>Displacement: Modified sphere's coarseness: -o 16 -a 16</figcaption>
+            </td>
+            <td>
+                <img src="images/p5_displacement_128.png" align="middle" width="400px"/>
+                <figcaption>Displacement: Modified sphere's coarseness: -o 128 -a 128</figcaption>
+            </td>
+        </tr>
+    </table>
+
+    <p>For both bump and displacement mapping, the lower coarse image resulted in sharper edges on the sphere compared to the higher resolution image. The cloth remained the same because the parameters should only affect the sphere resolution.</p>
+
+    <p>Mirror shader: </p>
+    <table style="width:100%">
+        <tr align="center">
+            <td>
+                <img src="images/p5_mirror.png" align="middle" width="400px"/>
+                <figcaption>Mirror shader</figcaption>
+            </td>
+            <td>
+                <img src="images/p5_mirror_simulation.png" align="middle" width="400px"/>
+                <figcaption>Mirror shader with simulation</figcaption>
+            </td>
+        </tr>
+    </table>
+
+</body>
 </html>
